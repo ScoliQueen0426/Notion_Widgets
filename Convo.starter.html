@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation Starter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Montserrat:wght@300;400;500;600;700&family=Open+Sans:wght@300;400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style id="customStyles">
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef);
+        }
+        .conversation-card {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 2px solid transparent;
+            border-image: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef) 1;
+            position: relative;
+            overflow: hidden;
+        }
+        .conversation-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #6366f1, #8b5cf6, #d946ef);
+        }
+        .question-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,240,255,0.9));
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .question-card::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, transparent, rgba(99, 102, 241, 0.05));
+            border-radius: 50%;
+        }
+        .confetti-dot {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+            }
+        }
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        .settings-panel {
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+        .settings-overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .settings-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .font-poppins { font-family: 'Poppins', sans-serif; }
+        .font-roboto { font-family: 'Roboto', sans-serif; }
+        .font-montserrat { font-family: 'Montserrat', sans-serif; }
+        .font-open-sans { font-family: 'Open Sans', sans-serif; }
+        .font-lato { font-family: 'Lato', sans-serif; }
+        
+        .wavy-bg {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='%236366f1'%3E%3C/path%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='%238b5cf6'%3E%3C/path%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='%23d946ef' opacity='.25'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+            background-size: 100% 100%;
+        }
+    </style>
+</head>
+<body class="bg-transparent m-0 p-0">
+    <div class="w-full px-4 py-3 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto relative">
+            <!-- Main Content -->
+            <div class="rounded-lg shadow-lg p-4 md:p-6 conversation-card">
+                <!-- Decorative elements -->
+                <div class="confetti-dot" style="top: 20px; left: 10%; width: 8px; height: 8px; background-color: #6366f1;"></div>
+                <div class="confetti-dot" style="top: 50px; left: 20%; width: 12px; height: 12px; background-color: #8b5cf6;"></div>
+                <div class="confetti-dot" style="top: 30px; right: 15%; width: 10px; height: 10px; background-color: #d946ef;"></div>
+                <div class="confetti-dot" style="bottom: 40px; right: 10%; width: 14px; height: 14px; background-color: #6366f1;"></div>
+                <div class="confetti-dot" style="bottom: 20px; left: 30%; width: 8px; height: 8px; background-color: #8b5cf6;"></div>
+                
+                <div class="flex justify-between items-center mb-4">
+                    <h1 class="text-xl md:text-2xl font-bold text-gray-800 relative">
+                        <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Conversation Starters</span>
+                        <span class="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-full"></span>
+                    </h1>
+                    <button id="settingsBtn" class="gradient-bg text-white px-3 py-1 rounded-md flex items-center shadow-md hover:shadow-lg transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Settings
+                    </button>
+                </div>
+
+                <div class="question-card p-4 md:p-6 mb-4 relative">
+                    <div id="questionContainer" class="min-h-[80px] flex items-center justify-center relative z-10">
+                        <p class="text-center text-gray-600">Click the button below to generate a conversation starter!</p>
+                    </div>
+                    <div class="wavy-bg"></div>
+                </div>
+
+                <div class="flex justify-center">
+                    <button id="generateBtn" class="gradient-bg text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 pulse-animation">
+                        <span class="flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Generate Conversation Starter
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel Overlay -->
+    <div id="settingsOverlay" class="settings-overlay fixed inset-0 bg-black bg-opacity-50 z-40"></div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-lg z-50 overflow-y-auto">
+        <div class="p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-800">Settings</h2>
+                <button id="closeSettingsBtn" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Partner Names -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-700">Partner Names</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="partner1Name" class="block text-sm font-medium text-gray-700 mb-1">Partner 1 Name</label>
+                            <input type="text" id="partner1Name" value="Alex" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label for="partner2Name" class="block text-sm font-medium text-gray-700 mb-1">Partner 2 Name</label>
+                            <input type="text" id="partner2Name" value="Jordan" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Color Theme -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-700">Color Theme</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#6366f1,#8b5cf6,#d946ef" style="background: linear-gradient(135deg, #6366f1, #8b5cf6, #d946ef)"></button>
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#3b82f6,#06b6d4,#14b8a6" style="background: linear-gradient(135deg, #3b82f6, #06b6d4, #14b8a6)"></button>
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#f97316,#f59e0b,#eab308" style="background: linear-gradient(135deg, #f97316, #f59e0b, #eab308)"></button>
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#ef4444,#f43f5e,#ec4899" style="background: linear-gradient(135deg, #ef4444, #f43f5e, #ec4899)"></button>
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#10b981,#059669,#047857" style="background: linear-gradient(135deg, #10b981, #059669, #047857)"></button>
+                        <button class="color-theme-btn h-12 rounded-md shadow-sm border-2 border-transparent hover:border-gray-400" data-colors="#6b7280,#4b5563,#374151" style="background: linear-gradient(135deg, #6b7280, #4b5563, #374151)"></button>
+                    </div>
+                </div>
+
+                <!-- Font Selection -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-700">Font Style</h3>
+                    <div class="space-y-2">
+                        <button class="font-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 font-poppins" data-font="Poppins">
+                            <span class="text-lg">Poppins</span>
+                        </button>
+                        <button class="font-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 font-roboto" data-font="Roboto">
+                            <span class="text-lg">Roboto</span>
+                        </button>
+                        <button class="font-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 font-montserrat" data-font="Montserrat">
+                            <span class="text-lg">Montserrat</span>
+                        </button>
+                        <button class="font-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 font-open-sans" data-font="Open Sans">
+                            <span class="text-lg">Open Sans</span>
+                        </button>
+                        <button class="font-btn w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 font-lato" data-font="Lato">
+                            <span class="text-lg">Lato</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Background Opacity -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-medium text-gray-700">Card Background</h3>
+                    <div class="space-y-2">
+                        <label for="bgOpacity" class="block text-sm font-medium text-gray-700">Opacity: <span id="opacityValue">90%</span></label>
+                        <input type="range" id="bgOpacity" min="0" max="100" value="90" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="pt-4">
+                    <button id="saveSettingsBtn" class="w-full gradient-bg text-white py-2 rounded-md font-medium shadow hover:shadow-md transition-all">
+                        Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const generateBtn = document.getElementById('generateBtn');
+            const questionContainer = document.getElementById('questionContainer');
+            const settingsBtn = document.getElementById('settingsBtn');
+            const settingsPanel = document.getElementById('settingsPanel');
+            const settingsOverlay = document.getElementById('settingsOverlay');
+            const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const partner1Input = document.getElementById('partner1Name');
+            const partner2Input = document.getElementById('partner2Name');
+            const colorBtns = document.querySelectorAll('.color-theme-btn');
+            const fontBtns = document.querySelectorAll('.font-btn');
+            const bgOpacitySlider = document.getElementById('bgOpacity');
+            const opacityValue = document.getElementById('opacityValue');
+            const customStyles = document.getElementById('customStyles');
+
+            // Default settings
+            const defaultSettings = {
+                partner1: 'Alex',
+                partner2: 'Jordan',
+                colors: ['#6366f1', '#8b5cf6', '#d946ef'],
+                font: 'Poppins',
+                bgOpacity: 0.9
+            };
+
+            // Current settings - load from localStorage or use defaults
+            let currentSettings = loadSettings() || {...defaultSettings};
+
+            // Question categories
+            const questions = {
+                general: [
+                    "If you could travel anywhere together, where would you go and why?",
+                    "What's one thing you'd like to learn together as a couple?",
+                    "What's your favorite memory we've created together so far?",
+                    "If we could have dinner with any three people (living or dead), who would you choose?",
+                    "What's something you think we should try that we've never done before?",
+                    "What's one tradition you'd like to establish together?",
+                    "What's the best gift we've ever given each other?",
+                    "If we could live in any fictional world, which would you choose?",
+                    "What's something small I do that makes you happy?",
+                    "What's one thing you think we could improve in our relationship?",
+                    "If we could switch lives for a day, what would you be most excited to experience?",
+                    "What's something you've always wanted to tell me but haven't?",
+                    "What's one goal you think we should set together?",
+                    "What's your idea of a perfect day spent together?",
+                    "What's something you've learned from our relationship?"
+                ],
+                partner1: [
+                    "PARTNER1, what's something PARTNER2 does that always makes you smile?",
+                    "PARTNER1, what was your first impression of PARTNER2?",
+                    "PARTNER1, what's something you admire about PARTNER2 that you wish more people noticed?",
+                    "PARTNER1, if you could give PARTNER2 any gift with no budget limits, what would it be?",
+                    "PARTNER1, what's something PARTNER2 has taught you?",
+                    "PARTNER1, what's your favorite physical feature of PARTNER2?",
+                    "PARTNER1, what's something you'd like PARTNER2 to know but haven't told them yet?",
+                    "PARTNER1, what's a quality in PARTNER2 that you hope never changes?",
+                    "PARTNER1, what's something PARTNER2 does that you find endearing?",
+                    "PARTNER1, what's a moment with PARTNER2 that you'll never forget?"
+                ],
+                partner2: [
+                    "PARTNER2, what's something PARTNER1 does that always makes you smile?",
+                    "PARTNER2, what was your first impression of PARTNER1?",
+                    "PARTNER2, what's something you admire about PARTNER1 that you wish more people noticed?",
+                    "PARTNER2, if you could give PARTNER1 any gift with no budget limits, what would it be?",
+                    "PARTNER2, what's something PARTNER1 has taught you?",
+                    "PARTNER2, what's your favorite physical feature of PARTNER1?",
+                    "PARTNER2, what's something you'd like PARTNER1 to know but haven't told them yet?",
+                    "PARTNER2, what's a quality in PARTNER1 that you hope never changes?",
+                    "PARTNER2, what's something PARTNER1 does that you find endearing?",
+                    "PARTNER2, what's a moment with PARTNER1 that you'll never forget?"
+                ]
+            };
+
+            // Save settings to localStorage
+            function saveSettings() {
+                try {
+                    localStorage.setItem('conversationStarterSettings', JSON.stringify(currentSettings));
+                    
+                    // Show save confirmation
+                    const saveConfirm = document.createElement('div');
+                    saveConfirm.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-md shadow-lg z-50';
+                    saveConfirm.textContent = 'Settings saved successfully!';
+                    document.body.appendChild(saveConfirm);
+                    
+                    setTimeout(() => {
+                        saveConfirm.remove();
+                    }, 2000);
+                    
+                    return true;
+                } catch (e) {
+                    console.error('Failed to save settings:', e);
+                    return false;
+                }
+            }
+
+            // Load settings from localStorage
+            function loadSettings() {
+                try {
+                    const savedSettings = localStorage.getItem('conversationStarterSettings');
+                    return savedSettings ? JSON.parse(savedSettings) : null;
+                } catch (e) {
+                    console.error('Failed to load settings:', e);
+                    return null;
+                }
+            }
+
+            // Generate a random question
+            function generateQuestion() {
+                // Randomly select question type
+                const questionTypes = ['general', 'partner1', 'partner2'];
+                const selectedType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+                
+                // Get a random question from the selected type
+                const questionList = questions[selectedType];
+                const randomQuestion = questionList[Math.floor(Math.random() * questionList.length)];
+                
+                // Replace partner placeholders with actual names
+                const formattedQuestion = randomQuestion
+                    .replace(/PARTNER1/g, currentSettings.partner1)
+                    .replace(/PARTNER2/g, currentSettings.partner2);
+                
+                // Create question element with appropriate styling
+                let questionTypeLabel = '';
+                let labelClass = '';
+                let iconSvg = '';
+                
+                if (selectedType === 'partner1') {
+                    questionTypeLabel = `For ${currentSettings.partner1}`;
+                    labelClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>';
+                } else if (selectedType === 'partner2') {
+                    questionTypeLabel = `For ${currentSettings.partner2}`;
+                    labelClass = 'bg-pink-100 text-pink-800 border border-pink-200';
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>';
+                } else {
+                    questionTypeLabel = 'For Both';
+                    labelClass = 'bg-purple-100 text-purple-800 border border-purple-200';
+                    iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>';
+                }
+                
+                questionContainer.innerHTML = `
+                    <div class="w-full">
+                        <span class="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full mb-3 ${labelClass}">
+                            ${iconSvg}
+                            ${questionTypeLabel}
+                        </span>
+                        <p class="text-lg md:text-xl text-gray-800 font-medium">${formattedQuestion}</p>
+                    </div>
+                `;
+            }
+
+            // Update styles based on current settings
+            function updateStyles() {
+                const colors = currentSettings.colors;
+                const gradientBg = `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`;
+                const bgOpacity = currentSettings.bgOpacity;
+                
+                customStyles.textContent = `
+                    body {
+                        font-family: '${currentSettings.font}', sans-serif;
+                    }
+                    .gradient-bg {
+                        background: ${gradientBg};
+                    }
+                    .conversation-card {
+                        background-color: rgba(255, 255, 255, ${bgOpacity});
+                        border: 2px solid transparent;
+                        border-image: linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]}) 1;
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .conversation-card::before {
+                        content: "";
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        height: 4px;
+                        background: linear-gradient(90deg, ${colors[0]}, ${colors[1]}, ${colors[2]});
+                    }
+                    .question-card {
+                        background: linear-gradient(135deg, rgba(255,255,255,0.9), rgba(240,240,255,0.9));
+                        border-radius: 12px;
+                        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.1);
+                        position: relative;
+                        overflow: hidden;
+                    }
+                    .question-card::after {
+                        content: "";
+                        position: absolute;
+                        bottom: 0;
+                        right: 0;
+                        width: 100px;
+                        height: 100px;
+                        background: linear-gradient(135deg, transparent, rgba(99, 102, 241, 0.05));
+                        border-radius: 50%;
+                    }
+                    .confetti-dot {
+                        position: absolute;
+                        border-radius: 50%;
+                        opacity: 0.6;
+                    }
+                    @keyframes float {
+                        0%, 100% {
+                            transform: translateY(0);
+                        }
+                        50% {
+                            transform: translateY(-10px);
+                        }
+                    }
+                    @keyframes pulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            box-shadow: 0 5px 15px rgba(${hexToRgb(colors[0])}, 0.4);
+                        }
+                        50% {
+                            transform: scale(1.05);
+                            box-shadow: 0 8px 20px rgba(${hexToRgb(colors[1])}, 0.6);
+                        }
+                    }
+                    .pulse-animation {
+                        animation: pulse 2s infinite;
+                    }
+                    .settings-panel {
+                        transform: translateX(100%);
+                        transition: transform 0.3s ease-in-out;
+                    }
+                    .settings-panel.open {
+                        transform: translateX(0);
+                    }
+                    .settings-overlay {
+                        opacity: 0;
+                        pointer-events: none;
+                        transition: opacity 0.3s ease-in-out;
+                    }
+                    .settings-overlay.open {
+                        opacity: 1;
+                        pointer-events: auto;
+                    }
+                    .font-poppins { font-family: 'Poppins', sans-serif; }
+                    .font-roboto { font-family: 'Roboto', sans-serif; }
+                    .font-montserrat { font-family: 'Montserrat', sans-serif; }
+                    .font-open-sans { font-family: 'Open Sans', sans-serif; }
+                    .font-lato { font-family: 'Lato', sans-serif; }
+                    
+                    .wavy-bg {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 20px;
+                        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 120' preserveAspectRatio='none'%3E%3Cpath d='M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z' opacity='.25' fill='${encodeURIComponent(colors[0])}'%3E%3C/path%3E%3Cpath d='M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z' opacity='.5' fill='${encodeURIComponent(colors[1])}'%3E%3C/path%3E%3Cpath d='M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z' fill='${encodeURIComponent(colors[2])}' opacity='.25'%3E%3C/path%3E%3C/svg%3E") no-repeat bottom;
+                        background-size: 100% 100%;
+                    }
+                `;
+                
+                // Update button style
+                generateBtn.className = "gradient-bg text-white px-8 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-300 pulse-animation";
+                saveSettingsBtn.className = "w-full gradient-bg text-white py-2 rounded-md font-medium shadow hover:shadow-md transition-all";
+                
+                // Update confetti dots
+                document.querySelectorAll('.confetti-dot').forEach((dot, index) => {
+                    const color = colors[index % colors.length];
+                    dot.style.backgroundColor = color;
+                });
+            }
+
+            // Helper function to convert hex to RGB
+            function hexToRgb(hex) {
+                // Remove the # if present
+                hex = hex.replace('#', '');
+                
+                // Parse the hex values
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                
+                return `${r}, ${g}, ${b}`;
+            }
+
+            // Update UI to reflect current settings
+            function updateSettingsUI() {
+                // Update name inputs
+                partner1Input.value = currentSettings.partner1;
+                partner2Input.value = currentSettings.partner2;
+                
+                // Update color selection
+                colorBtns.forEach(btn => {
+                    btn.classList.remove('border-gray-800', 'border-2');
+                    const btnColors = btn.dataset.colors.split(',');
+                    if (arraysEqual(btnColors, currentSettings.colors)) {
+                        btn.classList.add('border-gray-800', 'border-2');
+                    }
+                });
+                
+                // Update font selection
+                fontBtns.forEach(btn => {
+                    btn.classList.remove('bg-gray-200');
+                    if (btn.dataset.font === currentSettings.font) {
+                        btn.classList.add('bg-gray-200');
+                    }
+                });
+                
+                // Update opacity slider
+                const opacityPercentage = Math.round(currentSettings.bgOpacity * 100);
+                bgOpacitySlider.value = opacityPercentage;
+                opacityValue.textContent = `${opacityPercentage}%`;
+            }
+
+            // Helper function to compare arrays
+            function arraysEqual(a, b) {
+                if (a.length !== b.length) return false;
+                for (let i = 0; i < a.length; i++) {
+                    if (a[i] !== b[i]) return false;
+                }
+                return true;
+            }
+
+            // Event Listeners
+            generateBtn.addEventListener('click', generateQuestion);
+
+            settingsBtn.addEventListener('click', function() {
+                updateSettingsUI();
+                settingsPanel.classList.add('open');
+                settingsOverlay.classList.add('open');
+            });
+
+            closeSettingsBtn.addEventListener('click', function() {
+                settingsPanel.classList.remove('open');
+                settingsOverlay.classList.remove('open');
+            });
+
+            settingsOverlay.addEventListener('click', function() {
+                settingsPanel.classList.remove('open');
+                settingsOverlay.classList.remove('open');
+            });
+
+            partner1Input.addEventListener('input', function() {
+                currentSettings.partner1 = this.value || 'Partner 1';
+            });
+
+            partner2Input.addEventListener('input', function() {
+                currentSettings.partner2 = this.value || 'Partner 2';
+            });
+
+            colorBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active state from all buttons
+                    colorBtns.forEach(b => b.classList.remove('border-gray-800', 'border-2'));
+                    
+                    // Add active state to clicked button
+                    this.classList.add('border-gray-800', 'border-2');
+                    
+                    // Update colors
+                    const colors = this.dataset.colors.split(',');
+                    currentSettings.colors = colors;
+                    updateStyles();
+                });
+            });
+
+            fontBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Remove active state from all buttons
+                    fontBtns.forEach(b => b.classList.remove('bg-gray-200'));
+                    
+                    // Add active state to clicked button
+                    this.classList.add('bg-gray-200');
+                    
+                    // Update font
+                    currentSettings.font = this.dataset.font;
+                    updateStyles();
+                });
+            });
+
+            bgOpacitySlider.addEventListener('input', function() {
+                const value = this.value;
+                const opacity = value / 100;
+                
+                currentSettings.bgOpacity = opacity;
+                opacityValue.textContent = `${value}%`;
+                updateStyles();
+            });
+
+            saveSettingsBtn.addEventListener('click', function() {
+                if (saveSettings()) {
+                    // Close settings panel after saving
+                    setTimeout(() => {
+                        settingsPanel.classList.remove('open');
+                        settingsOverlay.classList.remove('open');
+                    }, 1000);
+                }
+            });
+
+            // Initialize
+            updateSettingsUI();
+            updateStyles();
+            generateQuestion();
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'98352cc3a67db687',t:'MTc1ODU3OTQ3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
