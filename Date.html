@@ -1,0 +1,2315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Ideas Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: transparent;
+            min-height: 100vh;
+        }
+        
+        .date-card {
+            transition: all 0.3s ease;
+        }
+        
+        .date-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .button-bounce:active {
+            transform: scale(0.95);
+        }
+
+        .heart-bg {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 48.75c-.67 0-1.31-.25-1.8-.7L14.55 35.36a12.28 12.28 0 0 1-3.8-8.96c0-3.38 1.32-6.56 3.71-8.95a12.64 12.64 0 0 1 17.91 0L30 15.08l-2.37-2.37a12.64 12.64 0 0 1 17.91 0 12.64 12.64 0 0 1 0 17.9L31.8 48.05c-.49.46-1.13.7-1.8.7z' fill='%23ffffff10' fill-rule='evenodd'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+        }
+
+        .tab-btn.active {
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        .category-btn.selected, .time-btn.selected, .weather-btn.selected {
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        }
+        
+        /* Button outline styles - IMPROVED with black outline by default */
+        .btn-outline {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-outline::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border: 3px dashed rgba(0, 0, 0, 0.7);
+            border-radius: inherit;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .btn-outline:hover::after,
+        .btn-outline:focus::after,
+        .btn-outline:active::after,
+        .btn-outline.selected::after {
+            opacity: 1;
+        }
+        
+        /* Primary colors */
+        :root {
+            --primary-light: #fdf2f8;
+            --primary-medium: #fbcfe8;
+            --primary-dark: #db2777;
+            --primary-gradient: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            --outline-color: rgba(0, 0, 0, 0.7);
+        }
+        
+        /* Theme-based styling */
+        .theme-header {
+            background: var(--primary-gradient);
+        }
+        
+        .theme-border {
+            border-color: var(--primary-dark);
+        }
+        
+        .theme-text {
+            color: var(--primary-dark);
+        }
+        
+        .theme-bg-light {
+            background-color: var(--primary-light);
+        }
+        
+        .theme-bg-medium {
+            background-color: var(--primary-medium);
+        }
+        
+        .theme-button {
+            background: var(--primary-gradient);
+        }
+        
+        .theme-container {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Dropdown animation */
+        .dropdown-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .dropdown-content.open {
+            max-height: 2000px;
+        }
+        
+        .dropdown-arrow {
+            transition: transform 0.3s ease;
+        }
+        
+        .dropdown-arrow.open {
+            transform: rotate(180deg);
+        }
+        
+        /* Settings modal */
+        .settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .settings-modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .settings-content {
+            background-color: white;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .settings-modal.open .settings-content {
+            transform: translateY(0);
+        }
+        
+        /* Color picker styles */
+        .color-preview {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 0.5rem;
+            border: 2px solid #e5e7eb;
+        }
+        
+        /* Weather filter - only visible for outdoor category */
+        #weather-filter {
+            transition: all 0.3s ease;
+        }
+        
+        /* Emoji picker styles */
+        .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        
+        .emoji-item {
+            font-size: 1.5rem;
+            cursor: pointer;
+            text-align: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        
+        .emoji-item:hover {
+            background-color: #f3f4f6;
+            transform: scale(1.2);
+        }
+    </style>
+</head>
+<body class="p-4">
+    <div class="max-w-4xl mx-auto theme-container rounded-2xl shadow-xl overflow-hidden">
+        <div class="theme-header p-6 text-center heart-bg relative">
+            <h1 class="text-3xl font-bold text-white mb-2">Date Ideas Generator</h1>
+            <p class="text-white text-opacity-90">Find the perfect date for any occasion!</p>
+            
+            <!-- Settings Button -->
+            <button id="settings-btn" class="absolute top-4 right-4 text-white p-2 rounded-full hover:bg-white hover:bg-opacity-20 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Tabs Navigation -->
+        <div class="flex border-b border-gray-200">
+            <button class="tab-btn active py-3 px-6 border-b-2 theme-border theme-text transition-all btn-outline" data-tab="in-person">
+                In Person Dates
+            </button>
+            <button class="tab-btn py-3 px-6 border-b-2 border-transparent text-gray-600 hover:text-pink-600 transition-all btn-outline" data-tab="long-distance">
+                Long Distance Dates
+            </button>
+        </div>
+        
+        <div class="p-6">
+            <!-- In Person Tab Content -->
+            <div id="in-person-tab" class="tab-content active">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Choose a Category</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                        <button class="category-btn selected bg-red-100 hover:bg-red-200 text-red-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="romantic">
+                            ❤️ Romantic
+                        </button>
+                        <button class="category-btn bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="outdoor">
+                            🌳 Outdoor
+                        </button>
+                        <button class="category-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="budget">
+                            💰 Budget
+                        </button>
+                        <button class="category-btn bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="adventure">
+                            🚀 Adventure
+                        </button>
+                        <button class="category-btn bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="creative">
+                            🎨 Creative
+                        </button>
+                        <button class="category-btn bg-amber-100 hover:bg-amber-200 text-amber-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-category="foodie">
+                            🍽️ Foodie
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Weather Filter (for outdoor category) -->
+                <div id="weather-filter" class="mb-6 hidden">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Weather Type</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="weather-btn selected bg-blue-100 hover:bg-blue-200 text-blue-800 py-3 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-weather="any">
+                            <div class="flex flex-col items-center">
+                                <span class="text-2xl mb-1">🌤️</span>
+                                <span class="text-sm text-center">Any Weather</span>
+                            </div>
+                        </button>
+                        <button class="weather-btn bg-orange-100 hover:bg-orange-200 text-orange-800 py-3 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-weather="warm">
+                            <div class="flex flex-col items-center">
+                                <span class="text-2xl mb-1">☀️</span>
+                                <span class="text-sm text-center">Warm Weather</span>
+                            </div>
+                        </button>
+                        <button class="weather-btn bg-cyan-100 hover:bg-cyan-200 text-cyan-800 py-3 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-weather="cold">
+                            <div class="flex flex-col items-center">
+                                <span class="text-2xl mb-1">❄️</span>
+                                <span class="text-sm text-center">Cold Weather</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Time of Day</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="time-btn bg-amber-100 hover:bg-amber-200 text-amber-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-time="morning">
+                            🌅 Morning
+                        </button>
+                        <button class="time-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-time="afternoon">
+                            ☀️ Afternoon
+                        </button>
+                        <button class="time-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-time="evening">
+                            🌙 Evening
+                        </button>
+                        <button class="time-btn selected bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="inPerson" data-time="any">
+                            🕒 Any Time
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="generate-in-person-btn" class="w-full theme-button text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all button-bounce text-lg hover:shadow-lg btn-outline">
+                    Find In-Person Date Idea
+                </button>
+                
+                <div id="inPerson-result" class="mt-6 hidden">
+                    <div class="theme-bg-light p-6 rounded-xl border theme-border border-opacity-20">
+                        <div class="flex items-start">
+                            <div id="inPerson-emoji" class="text-4xl mr-4"></div>
+                            <div>
+                                <h3 id="inPerson-title" class="text-xl font-semibold text-gray-800 mb-2"></h3>
+                                <p id="inPerson-description" class="text-gray-700"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between">
+                        <button id="new-in-person-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all button-bounce hover:shadow btn-outline">
+                            New Idea
+                        </button>
+                        <button id="save-in-person-btn" class="theme-button text-white font-medium py-2 px-4 rounded-lg transition-all button-bounce flex items-center hover:shadow btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            Save This Idea
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Long Distance Tab Content -->
+            <div id="long-distance-tab" class="tab-content">
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Choose a Category</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
+                        <button class="category-btn selected bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="virtual-dates">
+                            💻 Virtual Dates
+                        </button>
+                        <button class="category-btn bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="sync-activities">
+                            🔄 Sync Activities
+                        </button>
+                        <button class="category-btn bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="surprise-gifts">
+                            🎁 Surprise Gifts
+                        </button>
+                        <button class="category-btn bg-amber-100 hover:bg-amber-200 text-amber-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="games-challenges">
+                            🎮 Games & Challenges
+                        </button>
+                        <button class="category-btn bg-pink-100 hover:bg-pink-200 text-pink-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="meaningful-conversations">
+                            💭 Deep Conversations
+                        </button>
+                        <button class="category-btn bg-teal-100 hover:bg-teal-200 text-teal-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-category="future-planning">
+                            🗓️ Future Planning
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold mb-3 text-gray-800">Time of Day</h3>
+                    <div class="flex flex-wrap gap-3">
+                        <button class="time-btn bg-amber-100 hover:bg-amber-200 text-amber-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-time="morning">
+                            🌅 Morning
+                        </button>
+                        <button class="time-btn bg-yellow-100 hover:bg-yellow-200 text-yellow-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-time="afternoon">
+                            ☀️ Afternoon
+                        </button>
+                        <button class="time-btn bg-indigo-100 hover:bg-indigo-200 text-indigo-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-time="evening">
+                            🌙 Evening
+                        </button>
+                        <button class="time-btn selected bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-medium transition-all button-bounce btn-outline" data-section="longDistance" data-time="any">
+                            🕒 Any Time
+                        </button>
+                    </div>
+                </div>
+                
+                <button id="generate-long-distance-btn" class="w-full theme-button text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all button-bounce text-lg hover:shadow-lg btn-outline">
+                    Find Long Distance Date Idea
+                </button>
+                
+                <div id="longDistance-result" class="mt-6 hidden">
+                    <div class="theme-bg-light p-6 rounded-xl border theme-border border-opacity-20">
+                        <div class="flex items-start">
+                            <div id="longDistance-emoji" class="text-4xl mr-4"></div>
+                            <div>
+                                <h3 id="longDistance-title" class="text-xl font-semibold text-gray-800 mb-2"></h3>
+                                <p id="longDistance-description" class="text-gray-700"></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 flex justify-between">
+                        <button id="new-long-distance-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-all button-bounce hover:shadow btn-outline">
+                            New Idea
+                        </button>
+                        <button id="save-long-distance-btn" class="theme-button text-white font-medium py-2 px-4 rounded-lg transition-all button-bounce flex items-center hover:shadow btn-outline">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                            Save This Idea
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Saved Date Ideas Section -->
+            <div id="saved-dates-container" class="mt-8 hidden">
+                <h2 class="text-xl font-semibold mb-3 text-gray-800">Saved Date Ideas</h2>
+                <div id="saved-dates" class="space-y-3">
+                    <!-- Saved dates will appear here -->
+                </div>
+            </div>
+            
+            <!-- Custom Ideas Section (as dropdown) -->
+            <div id="custom-ideas-section" class="mt-8 pt-6 border-t border-gray-200">
+                <button id="custom-ideas-toggle" class="w-full flex justify-between items-center py-2 px-4 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all">
+                    <span class="font-semibold text-gray-800">Add Your Own Date Ideas</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                
+                <div id="custom-ideas-dropdown" class="dropdown-content mt-3">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800">Add Your Own Date Idea</h3>
+                        <form id="add-custom-idea-form">
+                            <div class="mb-3">
+                                <label for="custom-emoji" class="block text-sm font-medium text-gray-700 mb-1">Emoji</label>
+                                <div class="relative">
+                                    <input type="text" id="custom-emoji" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Choose an emoji (e.g. 🎨, 🍕, 🎬)" required>
+                                    <button type="button" id="emoji-picker-btn" class="absolute right-2 top-2 text-gray-500 hover:text-gray-700">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="emoji-picker" class="emoji-picker hidden">
+                                    <!-- Emojis will be populated here -->
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="custom-title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                                <input type="text" id="custom-title" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Name your date idea" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="custom-description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                <textarea id="custom-description" class="w-full p-2 border border-gray-300 rounded-lg" rows="3" placeholder="Describe your date idea" required></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                                <div class="flex gap-3">
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="custom-type" value="inPerson" class="form-radio" checked>
+                                        <span class="ml-2">In Person</span>
+                                    </label>
+                                    <label class="inline-flex items-center">
+                                        <input type="radio" name="custom-type" value="longDistance" class="form-radio">
+                                        <span class="ml-2">Long Distance</span>
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="custom-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                <select id="custom-category" class="w-full p-2 border border-gray-300 rounded-lg" required>
+                                    <optgroup label="In Person Categories">
+                                        <option value="romantic">Romantic</option>
+                                        <option value="outdoor">Outdoor</option>
+                                        <option value="budget">Budget</option>
+                                        <option value="adventure">Adventure</option>
+                                        <option value="creative">Creative</option>
+                                        <option value="foodie">Foodie</option>
+                                    </optgroup>
+                                    <optgroup label="Long Distance Categories">
+                                        <option value="virtual-dates">Virtual Dates</option>
+                                        <option value="sync-activities">Sync Activities</option>
+                                        <option value="surprise-gifts">Surprise Gifts</option>
+                                        <option value="games-challenges">Games & Challenges</option>
+                                        <option value="meaningful-conversations">Deep Conversations</option>
+                                        <option value="future-planning">Future Planning</option>
+                                    </optgroup>
+                                    <option value="custom">Other (Custom Category)</option>
+                                </select>
+                                <input type="text" id="custom-category-other" class="w-full p-2 border border-gray-300 rounded-lg mt-2 hidden" placeholder="Enter custom category">
+                            </div>
+                            
+                            <!-- Weather option for outdoor category -->
+                            <div id="custom-weather-container" class="mb-3 hidden">
+                                <label for="custom-weather" class="block text-sm font-medium text-gray-700 mb-1">Weather Type</label>
+                                <select id="custom-weather" class="w-full p-2 border border-gray-300 rounded-lg">
+                                    <option value="any" selected>Any Weather</option>
+                                    <option value="warm">Warm Weather</option>
+                                    <option value="cold">Cold Weather</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Time of Day</label>
+                                <select id="custom-time" class="w-full p-2 border border-gray-300 rounded-lg">
+                                    <option value="morning">Morning</option>
+                                    <option value="afternoon">Afternoon</option>
+                                    <option value="evening">Evening</option>
+                                    <option value="any" selected>Any Time</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="w-full theme-button text-white font-bold py-3 px-6 rounded-lg shadow-md transition-all button-bounce hover:shadow-lg">
+                                Add Custom Date Idea
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div id="custom-ideas-list">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800">Your Custom Date Ideas</h3>
+                        <div id="custom-ideas-container" class="space-y-3">
+                            <!-- Custom ideas will appear here -->
+                            <p id="no-custom-ideas" class="text-gray-500 italic">You haven't added any custom date ideas yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="settings-modal">
+        <div class="settings-content">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Appearance Settings</h2>
+                <button id="close-settings" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="font-medium text-gray-700 mb-2">Colors</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Primary Color</label>
+                        <div class="flex items-center">
+                            <div id="primary-color-preview" class="color-preview mr-2" style="background-color: #db2777;"></div>
+                            <input type="color" id="primary-color" value="#db2777" class="w-full">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Secondary Color</label>
+                        <div class="flex items-center">
+                            <div id="secondary-color-preview" class="color-preview mr-2" style="background-color: #ec4899;"></div>
+                            <input type="color" id="secondary-color" value="#ec4899" class="w-full">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="font-medium text-gray-700 mb-2">Button Outline</h3>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Outline Color</label>
+                    <div class="flex items-center">
+                        <div id="outline-color-preview" class="color-preview mr-2" style="background-color: rgba(0, 0, 0, 0.7);"></div>
+                        <input type="color" id="outline-color" value="#000000" class="w-full">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Outline Opacity</label>
+                    <input type="range" id="outline-opacity" min="0" max="100" value="70" class="w-full">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Transparent</span>
+                        <span>Solid</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="reset-settings" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg transition-all button-bounce">
+                    Reset to Default
+                </button>
+                <button id="apply-settings" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-all button-bounce">
+                    Apply Settings
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Date ideas database
+        const dateIdeas = {
+            // In Person Date Ideas
+            romantic: {
+                morning: [
+                    {
+                        emoji: "☕",
+                        title: "Sunrise Coffee Date",
+                        description: "Wake up early and catch the sunrise at a scenic spot while enjoying coffee and pastries from a local bakery."
+                    },
+                    {
+                        emoji: "🥐",
+                        title: "Breakfast in Bed",
+                        description: "Surprise your partner with a homemade breakfast in bed with their favorite morning treats."
+                    },
+                    {
+                        emoji: "🌸",
+                        title: "Morning Garden Stroll",
+                        description: "Visit a botanical garden or park early in the morning when flowers are blooming and the air is fresh."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🍷",
+                        title: "Vineyard Tour",
+                        description: "Spend the afternoon touring a local vineyard, learning about winemaking and enjoying tastings together."
+                    },
+                    {
+                        emoji: "🎨",
+                        title: "Couples Art Class",
+                        description: "Take a painting or pottery class together and create something special to remember the day."
+                    },
+                    {
+                        emoji: "🛶",
+                        title: "Romantic Boat Ride",
+                        description: "Rent a rowboat or paddle boat and spend the afternoon floating on a peaceful lake or river."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🍽️",
+                        title: "Rooftop Dinner",
+                        description: "Find a restaurant with rooftop seating and enjoy dinner under the stars with city views."
+                    },
+                    {
+                        emoji: "🕯️",
+                        title: "Candlelit Home Dinner",
+                        description: "Cook a special meal together at home, set the table with candles, and play soft music in the background."
+                    },
+                    {
+                        emoji: "🌃",
+                        title: "Stargazing Picnic",
+                        description: "Pack a blanket, some snacks, and head to a spot away from city lights to stargaze together."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "💌",
+                        title: "Love Letter Exchange",
+                        description: "Write love letters to each other and read them aloud in a special place that means something to both of you."
+                    },
+                    {
+                        emoji: "🎵",
+                        title: "Private Dance Lesson",
+                        description: "Take a private dance lesson together and learn some romantic moves you can practice at home."
+                    },
+                    {
+                        emoji: "🧺",
+                        title: "Surprise Picnic",
+                        description: "Prepare a picnic with all your partner's favorite foods and surprise them with a meal in a beautiful setting."
+                    }
+                ]
+            },
+            outdoor: {
+                // Weather-specific outdoor activities
+                warm: {
+                    morning: [
+                        {
+                            emoji: "🏊",
+                            title: "Morning Beach Swim",
+                            description: "Head to the beach early for a refreshing swim and breakfast picnic on the sand."
+                        },
+                        {
+                            emoji: "🚲",
+                            title: "Sunrise Bike Ride",
+                            description: "Rent bikes and explore a scenic trail or waterfront path as the sun comes up."
+                        },
+                        {
+                            emoji: "🧘‍♀️",
+                            title: "Outdoor Yoga Session",
+                            description: "Find a peaceful spot in a park for a morning yoga session followed by fresh fruit and tea."
+                        }
+                    ],
+                    afternoon: [
+                        {
+                            emoji: "🏞️",
+                            title: "Waterfall Hike",
+                            description: "Find a trail leading to a waterfall where you can cool off and enjoy the natural beauty."
+                        },
+                        {
+                            emoji: "🛶",
+                            title: "Kayaking Adventure",
+                            description: "Rent kayaks and explore a lake or gentle river together, stopping at interesting spots along the way."
+                        },
+                        {
+                            emoji: "🧺",
+                            title: "Botanical Garden Picnic",
+                            description: "Visit a botanical garden with a packed lunch and find a beautiful spot among the flowers to enjoy your meal."
+                        }
+                    ],
+                    evening: [
+                        {
+                            emoji: "🔥",
+                            title: "Beach Bonfire",
+                            description: "Set up a bonfire at the beach (where permitted), roast marshmallows, and watch the sunset."
+                        },
+                        {
+                            emoji: "🎭",
+                            title: "Outdoor Theater",
+                            description: "Find an outdoor movie screening or theater performance and enjoy entertainment under the stars."
+                        },
+                        {
+                            emoji: "🍹",
+                            title: "Rooftop Bar Date",
+                            description: "Find a rooftop bar or restaurant with outdoor seating and enjoy the evening breeze with cocktails."
+                        }
+                    ],
+                    any: [
+                        {
+                            emoji: "🏄‍♂️",
+                            title: "Learn to Surf",
+                            description: "Take a surfing lesson together at a local beach - perfect for warm weather and creating fun memories."
+                        },
+                        {
+                            emoji: "🏕️",
+                            title: "Camping Adventure",
+                            description: "Set up a tent at a scenic campground and enjoy hiking, swimming, and stargazing."
+                        },
+                        {
+                            emoji: "🌱",
+                            title: "Community Garden Visit",
+                            description: "Visit a community garden or farm where you can pick fresh produce together and learn about sustainable farming."
+                        }
+                    ]
+                },
+                cold: {
+                    morning: [
+                        {
+                            emoji: "☕",
+                            title: "Winter Sunrise Hike",
+                            description: "Bundle up for an invigorating morning hike to watch the sunrise, bringing thermoses of hot coffee or cocoa."
+                        },
+                        {
+                            emoji: "🥞",
+                            title: "Cabin Breakfast",
+                            description: "Find a cozy cabin or lodge with a view and enjoy a hearty breakfast while watching the snow fall."
+                        },
+                        {
+                            emoji: "📸",
+                            title: "Winter Photography Walk",
+                            description: "Explore a snow-covered park or forest in the morning light, capturing beautiful winter scenes together."
+                        }
+                    ],
+                    afternoon: [
+                        {
+                            emoji: "⛷️",
+                            title: "Skiing or Snowboarding",
+                            description: "Hit the slopes for an afternoon of skiing or snowboarding, whether you're beginners or experts."
+                        },
+                        {
+                            emoji: "🛷",
+                            title: "Sledding Adventure",
+                            description: "Find a local hill perfect for sledding and embrace your inner child with some downhill fun."
+                        },
+                        {
+                            emoji: "⛸️",
+                            title: "Ice Skating Date",
+                            description: "Visit an outdoor ice skating rink and hold hands as you glide across the ice together."
+                        }
+                    ],
+                    evening: [
+                        {
+                            emoji: "🔥",
+                            title: "Bonfire & S'mores",
+                            description: "Build a bonfire in a safe outdoor location and enjoy making s'mores and sharing stories."
+                        },
+                        {
+                            emoji: "🏮",
+                            title: "Winter Light Festival",
+                            description: "Visit a winter light festival or holiday light display for a magical evening stroll."
+                        },
+                        {
+                            emoji: "🍲",
+                            title: "Outdoor Hot Pot Dinner",
+                            description: "Find a restaurant with heated outdoor seating offering hot pot or fondue - perfect for cold evenings."
+                        }
+                    ],
+                    any: [
+                        {
+                            emoji: "☃️",
+                            title: "Snowman Building Contest",
+                            description: "Find a fresh snowfall and have a friendly competition to build the most creative snowman or snow sculpture."
+                        },
+                        {
+                            emoji: "🐾",
+                            title: "Animal Tracking",
+                            description: "After a fresh snow, visit a nature preserve to look for and identify animal tracks together."
+                        },
+                        {
+                            emoji: "🧣",
+                            title: "Winter Market Visit",
+                            description: "Bundle up and explore a winter farmers market or holiday market, sampling warm treats as you browse."
+                        }
+                    ]
+                },
+                // Original outdoor activities (now labeled as "any" weather)
+                morning: [
+                    {
+                        emoji: "🥾",
+                        title: "Morning Hike & Breakfast",
+                        description: "Take an early morning hike to a scenic viewpoint and enjoy a packed breakfast at the top."
+                    },
+                    {
+                        emoji: "🚲",
+                        title: "Sunrise Bike Ride",
+                        description: "Rent bikes and explore a scenic trail or waterfront path as the sun comes up."
+                    },
+                    {
+                        emoji: "🏊",
+                        title: "Early Swim & Beach Breakfast",
+                        description: "Head to the beach for an early morning swim followed by breakfast on the sand."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🧗‍♀️",
+                        title: "Rock Climbing Adventure",
+                        description: "Visit an outdoor climbing area or climbing gym and learn the ropes together (literally!)."
+                    },
+                    {
+                        emoji: "🏞️",
+                        title: "Waterfall Hunt",
+                        description: "Research local waterfalls and spend the day hiking to find them. Pack a lunch to enjoy by the water."
+                    },
+                    {
+                        emoji: "🧺",
+                        title: "Botanical Garden Picnic",
+                        description: "Visit a botanical garden with a packed lunch and find a beautiful spot to enjoy your meal."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🔥",
+                        title: "Beach Bonfire",
+                        description: "Set up a bonfire at the beach (where permitted), roast marshmallows, and watch the sunset."
+                    },
+                    {
+                        emoji: "🎭",
+                        title: "Outdoor Theater",
+                        description: "Find an outdoor movie screening or theater performance and enjoy entertainment under the stars."
+                    },
+                    {
+                        emoji: "🌌",
+                        title: "Night Hike",
+                        description: "Take a guided night hike in a safe area and experience nature after dark with flashlights."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🏕️",
+                        title: "Camping Getaway",
+                        description: "Set up a tent at a local campground or even in your backyard for a mini outdoor adventure."
+                    },
+                    {
+                        emoji: "🎣",
+                        title: "Fishing Date",
+                        description: "Spend a relaxing day fishing together at a local lake or river, even if you've never tried it before."
+                    },
+                    {
+                        emoji: "🌱",
+                        title: "Garden Together",
+                        description: "Start a small garden project together, planting flowers or vegetables you can nurture over time."
+                    }
+                ]
+            },
+            budget: {
+                morning: [
+                    {
+                        emoji: "🥞",
+                        title: "Homemade Pancake Contest",
+                        description: "Have a friendly competition to see who can make the most creative pancakes with ingredients you already have."
+                    },
+                    {
+                        emoji: "📚",
+                        title: "Library Date",
+                        description: "Visit your local library, find interesting books, and read together in a cozy corner."
+                    },
+                    {
+                        emoji: "🏃‍♂️",
+                        title: "Park Workout",
+                        description: "Create a fun workout routine you can do together at a local park using the available equipment."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🎭",
+                        title: "Free Museum Day",
+                        description: "Many museums offer free admission on certain days. Plan your date around one of these opportunities."
+                    },
+                    {
+                        emoji: "🧩",
+                        title: "Puzzle Picnic",
+                        description: "Pack sandwiches and head to the park with a portable board game or puzzle to enjoy outdoors."
+                    },
+                    {
+                        emoji: "🖼️",
+                        title: "Art Gallery Hopping",
+                        description: "Visit local art galleries, which are often free, and discuss your favorite pieces."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🎬",
+                        title: "DIY Movie Theater",
+                        description: "Transform your living room into a cinema with blankets and pillows, make popcorn, and watch a movie you both love."
+                    },
+                    {
+                        emoji: "✨",
+                        title: "Stargazing",
+                        description: "Lay out a blanket in your backyard or a local park and identify constellations together."
+                    },
+                    {
+                        emoji: "🍦",
+                        title: "Dessert Walk",
+                        description: "Get ice cream cones from an affordable local shop and take a leisurely evening stroll."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🎨",
+                        title: "DIY Craft Project",
+                        description: "Use materials you already have at home to create something together, like painting mugs or making photo frames."
+                    },
+                    {
+                        emoji: "🧁",
+                        title: "Bake-Off Challenge",
+                        description: "Challenge each other to bake something delicious with ingredients you already have in your pantry."
+                    },
+                    {
+                        emoji: "📱",
+                        title: "Photography Scavenger Hunt",
+                        description: "Create a list of things to photograph around your neighborhood and see who can find them all first."
+                    }
+                ]
+            },
+            adventure: {
+                morning: [
+                    {
+                        emoji: "🎈",
+                        title: "Hot Air Balloon Ride",
+                        description: "Book an early morning hot air balloon ride to see the sunrise from above."
+                    },
+                    {
+                        emoji: "🏄‍♂️",
+                        title: "Surf Lesson",
+                        description: "Take a morning surfing lesson together - the waves are often best early in the day!"
+                    },
+                    {
+                        emoji: "🚁",
+                        title: "Helicopter Tour",
+                        description: "See your city from above with an exciting helicopter tour in the clear morning light."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🧗‍♀️",
+                        title: "Rock Climbing",
+                        description: "Challenge yourselves with an outdoor rock climbing adventure or indoor climbing gym."
+                    },
+                    {
+                        emoji: "🚵‍♂️",
+                        title: "Mountain Biking",
+                        description: "Rent mountain bikes and hit some trails for an adrenaline-pumping afternoon."
+                    },
+                    {
+                        emoji: "🪂",
+                        title: "Paragliding Experience",
+                        description: "Take a tandem paragliding flight and soar above beautiful landscapes together."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🎢",
+                        title: "Night Theme Park",
+                        description: "Visit a theme park in the evening when lines are shorter and enjoy the rides lit up at night."
+                    },
+                    {
+                        emoji: "🌋",
+                        title: "Night Volcano Tour",
+                        description: "If you're near a volcano, take a guided evening tour to see the glow (where safe and available)."
+                    },
+                    {
+                        emoji: "🦇",
+                        title: "Night Wildlife Tour",
+                        description: "Join a guided night tour to spot nocturnal animals in their natural habitat."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🪢",
+                        title: "Zip-lining Adventure",
+                        description: "Soar through the treetops together on an exhilarating zip-line course."
+                    },
+                    {
+                        emoji: "🏎️",
+                        title: "Go-Kart Racing",
+                        description: "Race each other on a go-kart track and see who has the best driving skills."
+                    },
+                    {
+                        emoji: "🧠",
+                        title: "Escape Room Challenge",
+                        description: "Test your problem-solving skills together by trying to escape from a themed room within a time limit."
+                    }
+                ]
+            },
+            creative: {
+                morning: [
+                    {
+                        emoji: "🎨",
+                        title: "Sunrise Painting Session",
+                        description: "Pack portable art supplies and find a scenic spot to paint or sketch the sunrise together."
+                    },
+                    {
+                        emoji: "📸",
+                        title: "Morning Photography Walk",
+                        description: "Explore your city in the golden morning light, taking artistic photos of each other and interesting scenes."
+                    },
+                    {
+                        emoji: "🧵",
+                        title: "Craft & Coffee Morning",
+                        description: "Visit a craft café where you can enjoy morning coffee while working on a small creative project together."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🏺",
+                        title: "Pottery Workshop",
+                        description: "Take a pottery class and learn to throw clay on a wheel, creating pieces you can keep as mementos."
+                    },
+                    {
+                        emoji: "🎭",
+                        title: "Improv Class",
+                        description: "Join an afternoon improv workshop where you can laugh together while developing creative thinking skills."
+                    },
+                    {
+                        emoji: "🧶",
+                        title: "Yarn Art Adventure",
+                        description: "Visit a local yarn shop, pick out beautiful fibers, and learn to knit or crochet together."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🎸",
+                        title: "Live Music Sketching",
+                        description: "Attend a live music event with sketchbooks and draw interpretations of the music you're experiencing."
+                    },
+                    {
+                        emoji: "🎭",
+                        title: "Theater Workshop",
+                        description: "Find an evening acting workshop or class where you can explore character development together."
+                    },
+                    {
+                        emoji: "✨",
+                        title: "Light Painting Photography",
+                        description: "Use flashlights and long exposure photography to create magical light paintings in the dark."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🎵",
+                        title: "Music Creation Session",
+                        description: "Visit a music studio that offers sessions for beginners to create a song together, regardless of experience."
+                    },
+                    {
+                        emoji: "📝",
+                        title: "Creative Writing Date",
+                        description: "Bring notebooks to a cozy café and write short stories or poems, then share your creations with each other."
+                    },
+                    {
+                        emoji: "🧩",
+                        title: "Collaborative Art Project",
+                        description: "Start a creative project you can work on together over time, like a scrapbook, mural, or handmade gifts."
+                    }
+                ]
+            },
+            foodie: {
+                morning: [
+                    {
+                        emoji: "🥐",
+                        title: "Bakery Tour",
+                        description: "Visit several local bakeries and sample a small treat from each, comparing your favorites."
+                    },
+                    {
+                        emoji: "🍳",
+                        title: "Gourmet Breakfast Cooking",
+                        description: "Shop for premium ingredients and cook an elaborate breakfast together that you wouldn't normally make."
+                    },
+                    {
+                        emoji: "🥞",
+                        title: "Brunch Festival",
+                        description: "Attend a brunch festival or food market where you can sample dishes from multiple vendors."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🧀",
+                        title: "Cheese & Fruit Picnic",
+                        description: "Visit a specialty cheese shop, select several varieties, and enjoy them with fresh fruit in a scenic spot."
+                    },
+                    {
+                        emoji: "🍽️",
+                        title: "Cooking Class",
+                        description: "Take a cooking class together to learn how to make a cuisine you both enjoy but haven't tried cooking."
+                    },
+                    {
+                        emoji: "🍦",
+                        title: "Artisanal Ice Cream Tour",
+                        description: "Visit several ice cream shops that make their own unique flavors and create your own tasting flight."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🍷",
+                        title: "Wine Tasting Dinner",
+                        description: "Visit a restaurant that offers wine pairings with each course for a sophisticated culinary experience."
+                    },
+                    {
+                        emoji: "🍕",
+                        title: "DIY Pizza Night",
+                        description: "Prepare different doughs and toppings to create your own gourmet pizzas at home."
+                    },
+                    {
+                        emoji: "🍽️",
+                        title: "Progressive Dinner",
+                        description: "Have each course of your meal at a different restaurant, walking between locations to enjoy the evening."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🌮",
+                        title: "Food Truck Rally",
+                        description: "Find a food truck festival and sample small dishes from many different cuisines."
+                    },
+                    {
+                        emoji: "🍫",
+                        title: "Chocolate Tasting",
+                        description: "Buy several high-quality chocolate bars with different cacao percentages and origins for a tasting session."
+                    },
+                    {
+                        emoji: "🍜",
+                        title: "International Food Adventure",
+                        description: "Choose a cuisine neither of you has tried before and visit an authentic restaurant to expand your palates."
+                    }
+                ]
+            },
+            
+            // Long Distance Date Ideas
+            "virtual-dates": {
+                morning: [
+                    {
+                        emoji: "☕",
+                        title: "Virtual Coffee Morning",
+                        description: "Wake up at the same time, brew your favorite coffee or tea, and have a morning video chat as if you're at a café together."
+                    },
+                    {
+                        emoji: "🥞",
+                        title: "Breakfast Cook-Along",
+                        description: "Choose a recipe beforehand, gather the same ingredients, and cook breakfast together over video chat."
+                    },
+                    {
+                        emoji: "🧘‍♀️",
+                        title: "Morning Meditation",
+                        description: "Start your day with a guided meditation session together over video call to center yourselves and connect."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🎨",
+                        title: "Virtual Art Date",
+                        description: "Follow an online art tutorial together over video chat, then show off your creations at the end."
+                    },
+                    {
+                        emoji: "🍽️",
+                        title: "Lunch & Virtual Museum Tour",
+                        description: "Prepare similar lunches, then take a virtual tour of a famous museum together while you eat and discuss the exhibits."
+                    },
+                    {
+                        emoji: "🎮",
+                        title: "Afternoon Gaming Session",
+                        description: "Play an online multiplayer game together - whether it's chess, a cooperative adventure, or something competitive."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🍷",
+                        title: "Virtual Wine Tasting",
+                        description: "Buy the same wines beforehand and do a tasting together over video chat, discussing the flavors and your preferences."
+                    },
+                    {
+                        emoji: "🎬",
+                        title: "Movie Sync Night",
+                        description: "Use a browser extension to synchronize a movie or show, and video chat while watching so you can see each other's reactions."
+                    },
+                    {
+                        emoji: "🌙",
+                        title: "Virtual Stargazing",
+                        description: "If you're in similar time zones, go outside at night with your phones and show each other the stars in your respective skies."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🎵",
+                        title: "Virtual Concert Date",
+                        description: "Watch a livestreamed concert together, or create a shared playlist and have a dance party over video chat."
+                    },
+                    {
+                        emoji: "👨‍🍳",
+                        title: "Cook the Same Meal",
+                        description: "Choose a recipe, shop for the same ingredients, and cook the same meal together over video chat, then eat 'together'."
+                    },
+                    {
+                        emoji: "🎲",
+                        title: "Online Board Game Night",
+                        description: "Use an online board game platform to play your favorite games together virtually."
+                    }
+                ]
+            },
+            "sync-activities": {
+                morning: [
+                    {
+                        emoji: "📝",
+                        title: "Morning Journaling",
+                        description: "Start your day by writing in journals together over video chat, then share what you've written if you feel comfortable."
+                    },
+                    {
+                        emoji: "🏃‍♀️",
+                        title: "Virtual Morning Run",
+                        description: "Go for a morning run at the same time while on a phone call, sharing your experiences and motivating each other."
+                    },
+                    {
+                        emoji: "📰",
+                        title: "News & Coffee Chat",
+                        description: "Read the same news articles over breakfast, then discuss them together on a morning video call."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "📚",
+                        title: "Book Reading Session",
+                        description: "Read the same book at the same time while on a call, pausing occasionally to discuss what's happening."
+                    },
+                    {
+                        emoji: "🧘‍♀️",
+                        title: "Yoga Together",
+                        description: "Follow the same yoga video simultaneously, keeping your video chat open to see each other's poses."
+                    },
+                    {
+                        emoji: "🎮",
+                        title: "Gaming Challenge",
+                        description: "Play the same single-player game separately but simultaneously, comparing progress and helping each other."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🍽️",
+                        title: "Dinner Date",
+                        description: "Cook the same recipe for dinner and eat together over video chat with candles and nice place settings."
+                    },
+                    {
+                        emoji: "🎬",
+                        title: "Movie Night",
+                        description: "Watch the same movie while on a call, pausing at the same times for snack breaks or discussion."
+                    },
+                    {
+                        emoji: "🌃",
+                        title: "Evening Walk & Talk",
+                        description: "Go for an evening walk in your respective locations while on a phone call, describing what you see to each other."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "📱",
+                        title: "Photo Challenge Day",
+                        description: "Give each other photo challenges throughout the day and share your results in real-time."
+                    },
+                    {
+                        emoji: "🎧",
+                        title: "Podcast Discussion",
+                        description: "Listen to the same podcast episode separately, then call each other to discuss your thoughts."
+                    },
+                    {
+                        emoji: "🧩",
+                        title: "Parallel Projects",
+                        description: "Work on similar DIY projects simultaneously while on a video call, helping each other troubleshoot."
+                    }
+                ]
+            },
+            "surprise-gifts": {
+                morning: [
+                    {
+                        emoji: "🥐",
+                        title: "Breakfast Delivery",
+                        description: "Arrange for their favorite breakfast to be delivered to their door first thing in the morning."
+                    },
+                    {
+                        emoji: "☕",
+                        title: "Coffee Subscription",
+                        description: "Sign them up for a coffee or tea subscription that delivers new flavors for them to try each morning."
+                    },
+                    {
+                        emoji: "🌞",
+                        title: "Morning Care Package",
+                        description: "Send a package with morning essentials like a new mug, gourmet coffee, and a breakfast cookbook."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "💐",
+                        title: "Surprise Flower Delivery",
+                        description: "Have a bouquet of their favorite flowers delivered to their workplace or home in the middle of the day."
+                    },
+                    {
+                        emoji: "📦",
+                        title: "Curated Gift Box",
+                        description: "Send a themed gift box based on their interests, like a self-care package or hobby supplies."
+                    },
+                    {
+                        emoji: "🎵",
+                        title: "Playlist & Treats",
+                        description: "Create a special playlist and have their favorite snacks delivered to enjoy while listening."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🍽️",
+                        title: "Dinner Delivery Date",
+                        description: "Order their favorite meal from a local restaurant to be delivered during your evening video date."
+                    },
+                    {
+                        emoji: "🧸",
+                        title: "Comfort Package",
+                        description: "Send cozy items like a soft blanket, scented candle, and hot chocolate for a relaxing evening."
+                    },
+                    {
+                        emoji: "🎁",
+                        title: "Evening Unboxing",
+                        description: "Mail a package with instructions not to open until your evening video call, then watch them unbox it."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "📱",
+                        title: "Digital Gift Cards",
+                        description: "Send digital gift cards for apps, games, or services you can enjoy together remotely."
+                    },
+                    {
+                        emoji: "💌",
+                        title: "Handwritten Letter",
+                        description: "Mail a heartfelt handwritten letter expressing your feelings and memories together."
+                    },
+                    {
+                        emoji: "🎵",
+                        title: "Custom Playlist",
+                        description: "Create a playlist of songs that remind you of them or tell your relationship story."
+                    }
+                ]
+            },
+            "games-challenges": {
+                morning: [
+                    {
+                        emoji: "🧩",
+                        title: "Morning Riddles",
+                        description: "Start the day by sending each other riddles or brain teasers to solve before your morning call."
+                    },
+                    {
+                        emoji: "📝",
+                        title: "Word Game Wake-Up",
+                        description: "Play a round of online Scrabble, Wordle, or another word game as you enjoy your morning coffee together."
+                    },
+                    {
+                        emoji: "🎯",
+                        title: "Daily Challenge",
+                        description: "Set a small daily challenge for each other to complete before your evening call, like taking a photo of something blue."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "🎮",
+                        title: "Online Gaming Session",
+                        description: "Schedule an afternoon to play online games together - whether cooperative or competitive."
+                    },
+                    {
+                        emoji: "🧩",
+                        title: "Virtual Escape Room",
+                        description: "Book an online escape room designed for remote players and work together to solve the puzzles."
+                    },
+                    {
+                        emoji: "📱",
+                        title: "App Game Tournament",
+                        description: "Choose several mobile games you both enjoy and have a mini-tournament with a prize for the winner."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🎲",
+                        title: "Virtual Board Game Night",
+                        description: "Use an online platform to play digital versions of your favorite board games together."
+                    },
+                    {
+                        emoji: "🎭",
+                        title: "Charades Night",
+                        description: "Play charades over video chat, acting out movies, books, or songs for each other to guess."
+                    },
+                    {
+                        emoji: "🎤",
+                        title: "Karaoke Challenge",
+                        description: "Take turns singing songs using a karaoke app and rate each other's performances."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "📚",
+                        title: "Book Challenge",
+                        description: "Challenge each other to read the same book within a set timeframe, then discuss it together."
+                    },
+                    {
+                        emoji: "👨‍🍳",
+                        title: "Cooking Competition",
+                        description: "Agree on a dish or ingredient, then each create your own version and judge the results over video."
+                    },
+                    {
+                        emoji: "📸",
+                        title: "Photo Challenge",
+                        description: "Give each other daily or weekly photo challenges to complete and share the results."
+                    }
+                ]
+            },
+            "meaningful-conversations": {
+                morning: [
+                    {
+                        emoji: "☕",
+                        title: "Coffee & Dreams Chat",
+                        description: "Share your dreams from the night before over morning coffee and discuss what they might mean."
+                    },
+                    {
+                        emoji: "🌅",
+                        title: "Sunrise Reflections",
+                        description: "Wake up early to watch the sunrise together over video and share your hopes for the future."
+                    },
+                    {
+                        emoji: "📝",
+                        title: "Morning Gratitude Practice",
+                        description: "Start your day by sharing three things you're grateful for, including at least one about each other."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "📚",
+                        title: "Book Discussion",
+                        description: "Read the same book and schedule an afternoon to discuss themes, characters, and how it relates to your lives."
+                    },
+                    {
+                        emoji: "🎧",
+                        title: "Podcast Analysis",
+                        description: "Listen to the same thought-provoking podcast episode, then discuss your takeaways and how they apply to your relationship."
+                    },
+                    {
+                        emoji: "🧠",
+                        title: "Philosophical Questions",
+                        description: "Take turns asking each other deep philosophical questions and exploring your thoughts together."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🌌",
+                        title: "Stargazing Questions",
+                        description: "Look at the stars from your respective locations while discussing life's big questions over the phone."
+                    },
+                    {
+                        emoji: "🕯️",
+                        title: "Candlelit Confessions",
+                        description: "Create a cozy atmosphere with candles and take turns sharing things you've never told anyone else."
+                    },
+                    {
+                        emoji: "💌",
+                        title: "Letter Reading Night",
+                        description: "Write letters to each other about your feelings, mail them, and read them aloud during a video call."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "❤️",
+                        title: "Love Languages Discussion",
+                        description: "Take a love languages quiz separately, then discuss your results and how to better meet each other's needs."
+                    },
+                    {
+                        emoji: "🧩",
+                        title: "Personality Test Comparison",
+                        description: "Take the same personality test and discuss how your types interact and complement each other."
+                    },
+                    {
+                        emoji: "🌈",
+                        title: "Hopes & Dreams Sharing",
+                        description: "Create vision boards separately, then share them with each other, explaining your future dreams."
+                    }
+                ]
+            },
+            "future-planning": {
+                morning: [
+                    {
+                        emoji: "☕",
+                        title: "Breakfast Bucket List",
+                        description: "Over morning coffee, brainstorm your shared bucket list of experiences you want to have together."
+                    },
+                    {
+                        emoji: "🏡",
+                        title: "Dream Home Pinterest",
+                        description: "Create a shared Pinterest board for your dream home and discuss your ideas over a morning video call."
+                    },
+                    {
+                        emoji: "📅",
+                        title: "Next Visit Planning",
+                        description: "Use a morning call to plan the details of your next visit, researching activities and creating an itinerary together."
+                    }
+                ],
+                afternoon: [
+                    {
+                        emoji: "✈️",
+                        title: "Travel Planning Session",
+                        description: "Research destinations for a future trip together, creating a shared document with ideas and costs."
+                    },
+                    {
+                        emoji: "📊",
+                        title: "Financial Future Talk",
+                        description: "Discuss your financial goals, savings plans, and how you might merge finances in the future."
+                    },
+                    {
+                        emoji: "🏙️",
+                        title: "Relocation Research",
+                        description: "If one of you will eventually move, research neighborhoods, housing options, and job opportunities together."
+                    }
+                ],
+                evening: [
+                    {
+                        emoji: "🌃",
+                        title: "Five-Year Vision",
+                        description: "Over an evening video date, take turns describing where you see yourselves in five years, both individually and as a couple."
+                    },
+                    {
+                        emoji: "💍",
+                        title: "Relationship Milestone Talk",
+                        description: "Discuss future relationship milestones and what they mean to each of you in a thoughtful evening conversation."
+                    },
+                    {
+                        emoji: "🏡",
+                        title: "Living Together Planning",
+                        description: "If you're planning to live together eventually, discuss preferences, boundaries, and logistics."
+                    }
+                ],
+                any: [
+                    {
+                        emoji: "🗺️",
+                        title: "Relationship Roadmap",
+                        description: "Create a visual roadmap of your relationship, marking milestones you've achieved and ones you're working toward."
+                    },
+                    {
+                        emoji: "📝",
+                        title: "Couples' Manifesto",
+                        description: "Write a relationship manifesto together that outlines your shared values, goals, and commitments."
+                    },
+                    {
+                        emoji: "🏝️",
+                        title: "Dream Vacation Planning",
+                        description: "Plan your dream vacation in detail, even if it's years away, researching locations and creating a savings plan."
+                    }
+                ]
+            }
+        };
+
+        // Common emojis for the emoji picker
+        const commonEmojis = [
+            "❤️", "💕", "💖", "🌹", "🌷", "🌸", "🌺", "🌻", "🌼", "🍀", "🌈", "✨", "⭐", "🌟", "💫", "🔥",
+            "☀️", "🌤️", "⛅", "🌥️", "☁️", "🌦️", "🌧️", "⛈️", "🌩️", "🌨️", "❄️", "☃️", "⛄", "🌬️", "💨", "🌪️",
+            "🌊", "🍇", "🍈", "🍉", "🍊", "🍋", "🍌", "🍍", "🥭", "🍎", "🍏", "🍐", "🍑", "🍒", "🍓", "🥝",
+            "🍅", "🥥", "🥑", "🍆", "🥔", "🥕", "🌽", "🌶️", "🥒", "🥬", "🥦", "🧄", "🧅", "🍄", "🥜", "🌰",
+            "🍞", "🥐", "🥖", "🥨", "🥯", "🥞", "🧇", "🧀", "🍖", "🍗", "🥩", "🥓", "🍔", "🍟", "🍕", "🌭",
+            "🥪", "🌮", "🌯", "🥙", "🧆", "🥚", "🍳", "🥘", "🍲", "🥣", "🥗", "🍿", "🧈", "🧂", "🥫", "🍱",
+            "🍘", "🍙", "🍚", "🍛", "🍜", "🍝", "🍠", "🍢", "🍣", "🍤", "🍥", "🥮", "🍡", "🥟", "🥠", "🥡",
+            "🦪", "🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫", "🍬", "🍭", "🍮", "🍯", "🍼",
+            "🥛", "☕", "🍵", "🍶", "🍾", "🍷", "🍸", "🍹", "🍺", "🍻", "🥂", "🥃", "🥤", "🧃", "🧉", "🧊",
+            "🥢", "🍽️", "🍴", "🥄", "🏺", "🎭", "🎨", "🎬", "🎤", "🎧", "🎼", "🎹", "🥁", "🎷", "🎺", "🎸",
+            "🎻", "🎲", "♟️", "🎯", "🎳", "🎮", "🎰", "🧩", "🚗", "🚕", "🚙", "🚌", "🚎", "🏎️", "🚓", "🚑",
+            "🚒", "🚐", "🚚", "🚛", "🚜", "🛴", "🚲", "🛵", "🏍️", "🚨", "🚔", "🚍", "🚘", "🚖", "🚡", "🚠",
+            "🚟", "🚃", "🚋", "🚞", "🚝", "🚄", "🚅", "🚈", "🚂", "🚆", "🚇", "🚊", "🚉", "✈️", "🛫", "🛬",
+            "🛩️", "💺", "🛰️", "🚀", "🛸", "🚁", "🛶", "⛵", "🚤", "🛥️", "🛳️", "⛴️", "🚢", "⚓", "⛽", "🚧",
+            "🚦", "🚥", "🚏", "🗺️", "🗿", "🗽", "🗼", "🏰", "🏯", "🏟️", "🎡", "🎢", "🎠", "⛲", "⛱️", "🏖️",
+            "🏝️", "🏜️", "🌋", "⛰️", "🏔️", "🗻", "🏕️", "⛺", "🏠", "🏡", "🏘️", "🏚️", "🏗️", "🏢", "🏬", "🏣",
+            "🏤", "🏥", "🏦", "🏨", "🏪", "🏫", "🏩", "💒", "🏛️", "⛪", "🕌", "🕍", "🛕", "🕋", "⛩️", "🛤️",
+            "🛣️", "🗾", "🎑", "🏞️", "🌅", "🌄", "🌠", "🎇", "🎆", "🌇", "🌆", "🏙️", "🌃", "🌌", "🌉", "🌁"
+        ];
+
+        // Default colors
+        const defaultColors = {
+            primaryColor: '#db2777',
+            secondaryColor: '#ec4899',
+            outlineColor: '#000000',
+            outlineOpacity: '70'
+        };
+
+        // Current selections
+        let currentSelections = {
+            inPerson: {
+                category: 'romantic',
+                time: 'any',
+                weather: 'any' // New weather selection
+            },
+            longDistance: {
+                category: 'virtual-dates',
+                time: 'any'
+            }
+        };
+
+        // Current date idea
+        let currentDateIdea = {
+            inPerson: null,
+            longDistance: null
+        };
+
+        // Initialize saved dates from localStorage
+        let savedDatesList = JSON.parse(localStorage.getItem('savedDates')) || [];
+        
+        // Initialize custom ideas from localStorage
+        let customIdeasList = JSON.parse(localStorage.getItem('customIdeas')) || [];
+
+        // Load saved colors
+        const primaryColor = localStorage.getItem('primaryColor') || defaultColors.primaryColor;
+        const secondaryColor = localStorage.getItem('secondaryColor') || defaultColors.secondaryColor;
+        const outlineColor = localStorage.getItem('outlineColor') || defaultColors.outlineColor;
+        const outlineOpacity = localStorage.getItem('outlineOpacity') || defaultColors.outlineOpacity;
+
+        // Apply saved colors
+        updateColors(primaryColor, secondaryColor, outlineColor, outlineOpacity);
+
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+                
+                // Update active tab button
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    btn.classList.remove('theme-border');
+                    btn.classList.remove('theme-text');
+                    btn.classList.add('border-transparent');
+                    btn.classList.add('text-gray-600');
+                    btn.classList.remove('active');
+                });
+                button.classList.add('active');
+                button.classList.add('theme-border');
+                button.classList.add('theme-text');
+                button.classList.remove('text-gray-600');
+                
+                // Show the selected tab content
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById(`${tabName}-tab`).classList.add('active');
+            });
+        });
+
+        // Category selection
+        document.querySelectorAll('.category-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const section = button.getAttribute('data-section');
+                const category = button.getAttribute('data-category');
+                
+                // Update selected button in this section
+                document.querySelectorAll(`.category-btn[data-section="${section}"]`).forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.classList.remove('active');
+                });
+                button.classList.add('selected');
+                button.classList.add('active');
+                
+                // Update current selection
+                currentSelections[section].category = category;
+                
+                // Show/hide weather filter for outdoor category
+                const weatherFilter = document.getElementById('weather-filter');
+                if (section === 'inPerson' && category === 'outdoor') {
+                    weatherFilter.classList.remove('hidden');
+                    weatherFilter.style.opacity = 0;
+                    setTimeout(() => {
+                        weatherFilter.style.opacity = 1;
+                    }, 10);
+                } else {
+                    weatherFilter.classList.add('hidden');
+                }
+            });
+        });
+
+        // Time selection
+        document.querySelectorAll('.time-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const section = button.getAttribute('data-section');
+                const time = button.getAttribute('data-time');
+                
+                // Update selected button in this section
+                document.querySelectorAll(`.time-btn[data-section="${section}"]`).forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.classList.remove('active');
+                });
+                button.classList.add('selected');
+                button.classList.add('active');
+                
+                // Update current selection
+                currentSelections[section].time = time;
+            });
+        });
+
+        // Weather selection
+        document.querySelectorAll('.weather-btn').forEach(button => {
+            button.addEventListener('click', () => {
+                const section = button.getAttribute('data-section');
+                const weather = button.getAttribute('data-weather');
+                
+                // Update selected button in this section
+                document.querySelectorAll(`.weather-btn[data-section="${section}"]`).forEach(btn => {
+                    btn.classList.remove('selected');
+                    btn.classList.remove('active');
+                });
+                button.classList.add('selected');
+                button.classList.add('active');
+                
+                // Update current selection
+                currentSelections[section].weather = weather;
+            });
+        });
+
+        // Generate date idea functions
+        function generateDateIdea(section) {
+            const category = currentSelections[section].category;
+            const time = currentSelections[section].time;
+            let weather = currentSelections[section].weather || 'any';
+            
+            // Get ideas based on category, time, and weather (if applicable)
+            let ideas;
+            
+            if (section === 'inPerson' && category === 'outdoor' && weather !== 'any') {
+                // For outdoor category with specific weather
+                ideas = dateIdeas[category][weather][time];
+                
+                // If no ideas found for that time, try the "any" time category
+                if (!ideas || ideas.length === 0) {
+                    ideas = dateIdeas[category][weather].any;
+                }
+            } else {
+                // For all other categories or "any" weather
+                ideas = dateIdeas[category][time];
+                
+                // If no ideas found, try the "any" time category
+                if (!ideas || ideas.length === 0) {
+                    ideas = dateIdeas[category].any;
+                }
+            }
+            
+            // Randomly select an idea
+            const randomIndex = Math.floor(Math.random() * ideas.length);
+            const idea = ideas[randomIndex];
+            
+            // Store the current idea
+            currentDateIdea[section] = {
+                ...idea,
+                category,
+                time,
+                weather: section === 'inPerson' && category === 'outdoor' ? weather : undefined
+            };
+            
+            // Display the idea
+            document.getElementById(`${section}-emoji`).textContent = idea.emoji;
+            document.getElementById(`${section}-title`).textContent = idea.title;
+            document.getElementById(`${section}-description`).textContent = idea.description;
+            
+            // Show the result container
+            document.getElementById(`${section}-result`).classList.remove('hidden');
+        }
+
+        // Generate in-person date idea
+        document.getElementById('generate-in-person-btn').addEventListener('click', () => {
+            generateDateIdea('inPerson');
+        });
+
+        // Generate long-distance date idea
+        document.getElementById('generate-long-distance-btn').addEventListener('click', () => {
+            generateDateIdea('longDistance');
+        });
+
+        // New idea buttons
+        document.getElementById('new-in-person-btn').addEventListener('click', () => {
+            generateDateIdea('inPerson');
+        });
+
+        document.getElementById('new-long-distance-btn').addEventListener('click', () => {
+            generateDateIdea('longDistance');
+        });
+
+        // Save idea functions
+        function saveIdea(section) {
+            if (currentDateIdea[section]) {
+                // Add the idea to saved list
+                savedDatesList.push({
+                    ...currentDateIdea[section],
+                    id: Date.now(),
+                    type: section
+                });
+                
+                // Save to localStorage
+                localStorage.setItem('savedDates', JSON.stringify(savedDatesList));
+                
+                // Update the UI
+                renderSavedDates();
+                
+                // Show the saved dates container
+                document.getElementById('saved-dates-container').classList.remove('hidden');
+            }
+        }
+
+        // Save buttons
+        document.getElementById('save-in-person-btn').addEventListener('click', () => {
+            saveIdea('inPerson');
+        });
+
+        document.getElementById('save-long-distance-btn').addEventListener('click', () => {
+            saveIdea('longDistance');
+        });
+
+        // Render saved dates
+        function renderSavedDates() {
+            const savedDatesContainer = document.getElementById('saved-dates-container');
+            const savedDates = document.getElementById('saved-dates');
+            
+            if (savedDatesList.length === 0) {
+                savedDatesContainer.classList.add('hidden');
+                return;
+            }
+            
+            // Clear the container
+            savedDates.innerHTML = '';
+            
+            // Add each saved date
+            savedDatesList.forEach(idea => {
+                const card = document.createElement('div');
+                card.className = 'date-card bg-white p-4 rounded-lg shadow-md border border-gray-100 flex items-start';
+                
+                const bgColor = idea.type === 'inPerson' ? 'theme-bg-medium' : 'bg-blue-100';
+                const textColor = idea.type === 'inPerson' ? 'text-gray-800' : 'text-blue-800';
+                
+                // Create tags HTML
+                let tagsHTML = `
+                    <span class="${bgColor} ${textColor} text-xs px-2 py-1 rounded-full">${idea.type === 'inPerson' ? 'In Person' : 'Long Distance'}</span>
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">${idea.category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">${idea.time.charAt(0).toUpperCase() + idea.time.slice(1)}</span>
+                `;
+                
+                // Add weather tag if applicable
+                if (idea.weather && idea.weather !== 'any') {
+                    const weatherColor = idea.weather === 'warm' ? 'bg-orange-100 text-orange-800' : 'bg-cyan-100 text-cyan-800';
+                    const weatherIcon = idea.weather === 'warm' ? '☀️' : '❄️';
+                    tagsHTML += `
+                        <span class="${weatherColor} text-xs px-2 py-1 rounded-full">${weatherIcon} ${idea.weather.charAt(0).toUpperCase() + idea.weather.slice(1)} Weather</span>
+                    `;
+                }
+                
+                card.innerHTML = `
+                    <div class="text-3xl mr-4">${idea.emoji}</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-semibold text-gray-800">${idea.title}</h3>
+                            <button class="delete-saved text-red-500 hover:text-red-700 btn-outline p-1 rounded" data-id="${idea.id}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">${idea.description}</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            ${tagsHTML}
+                        </div>
+                    </div>
+                `;
+                
+                savedDates.appendChild(card);
+            });
+            
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-saved').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                    deleteSavedIdea(id);
+                });
+            });
+        }
+
+        // Delete saved idea
+        function deleteSavedIdea(id) {
+            savedDatesList = savedDatesList.filter(idea => idea.id !== id);
+            localStorage.setItem('savedDates', JSON.stringify(savedDatesList));
+            renderSavedDates();
+            
+            if (savedDatesList.length === 0) {
+                document.getElementById('saved-dates-container').classList.add('hidden');
+            }
+        }
+
+        // Custom category handling
+        document.getElementById('custom-category').addEventListener('change', function() {
+            const customCategoryInput = document.getElementById('custom-category-other');
+            const customWeatherContainer = document.getElementById('custom-weather-container');
+            
+            if (this.value === 'custom') {
+                customCategoryInput.classList.remove('hidden');
+                customCategoryInput.setAttribute('required', 'required');
+                customWeatherContainer.classList.add('hidden');
+            } else if (this.value === 'outdoor') {
+                customCategoryInput.classList.add('hidden');
+                customCategoryInput.removeAttribute('required');
+                customWeatherContainer.classList.remove('hidden');
+            } else {
+                customCategoryInput.classList.add('hidden');
+                customCategoryInput.removeAttribute('required');
+                customWeatherContainer.classList.add('hidden');
+            }
+        });
+
+        // Add custom idea
+        document.getElementById('add-custom-idea-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const emoji = document.getElementById('custom-emoji').value;
+            const title = document.getElementById('custom-title').value;
+            const description = document.getElementById('custom-description').value;
+            const type = document.querySelector('input[name="custom-type"]:checked').value;
+            
+            let category;
+            const categorySelect = document.getElementById('custom-category');
+            if (categorySelect.value === 'custom') {
+                category = document.getElementById('custom-category-other').value.toLowerCase().replace(/\s+/g, '-');
+            } else {
+                category = categorySelect.value;
+            }
+            
+            const time = document.getElementById('custom-time').value;
+            
+            // Get weather if applicable
+            let weather;
+            if (category === 'outdoor') {
+                weather = document.getElementById('custom-weather').value;
+            }
+            
+            // Create new custom idea
+            const newIdea = {
+                id: Date.now(),
+                emoji,
+                title,
+                description,
+                type,
+                category,
+                time,
+                weather
+            };
+            
+            // Add to custom ideas list
+            customIdeasList.push(newIdea);
+            
+            // Save to localStorage
+            localStorage.setItem('customIdeas', JSON.stringify(customIdeasList));
+            
+            // Reset form
+            document.getElementById('add-custom-idea-form').reset();
+            document.getElementById('custom-category-other').classList.add('hidden');
+            document.getElementById('custom-weather-container').classList.add('hidden');
+            
+            // Update UI
+            renderCustomIdeas();
+        });
+
+        // Render custom ideas
+        function renderCustomIdeas() {
+            const customIdeasContainer = document.getElementById('custom-ideas-container');
+            const noCustomIdeas = document.getElementById('no-custom-ideas');
+            
+            if (customIdeasList.length === 0) {
+                noCustomIdeas.classList.remove('hidden');
+                return;
+            }
+            
+            // Hide the "no ideas" message
+            noCustomIdeas.classList.add('hidden');
+            
+            // Clear the container (except for the "no ideas" message)
+            const existingIdeas = customIdeasContainer.querySelectorAll('.date-card');
+            existingIdeas.forEach(card => card.remove());
+            
+            // Add each custom idea
+            customIdeasList.forEach(idea => {
+                const card = document.createElement('div');
+                card.className = 'date-card bg-white p-4 rounded-lg shadow-md border border-gray-100 flex items-start';
+                
+                const bgColor = idea.type === 'inPerson' ? 'theme-bg-medium' : 'bg-blue-100';
+                const textColor = idea.type === 'inPerson' ? 'text-gray-800' : 'text-blue-800';
+                
+                // Create tags HTML
+                let tagsHTML = `
+                    <span class="${bgColor} ${textColor} text-xs px-2 py-1 rounded-full">${idea.type === 'inPerson' ? 'In Person' : 'Long Distance'}</span>
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">${idea.category.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                    <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">${idea.time.charAt(0).toUpperCase() + idea.time.slice(1)}</span>
+                `;
+                
+                // Add weather tag if applicable
+                if (idea.weather && idea.weather !== 'any' && idea.category === 'outdoor') {
+                    const weatherColor = idea.weather === 'warm' ? 'bg-orange-100 text-orange-800' : 'bg-cyan-100 text-cyan-800';
+                    const weatherIcon = idea.weather === 'warm' ? '☀️' : '❄️';
+                    tagsHTML += `
+                        <span class="${weatherColor} text-xs px-2 py-1 rounded-full">${weatherIcon} ${idea.weather.charAt(0).toUpperCase() + idea.weather.slice(1)} Weather</span>
+                    `;
+                }
+                
+                card.innerHTML = `
+                    <div class="text-3xl mr-4">${idea.emoji}</div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-semibold text-gray-800">${idea.title}</h3>
+                            <div class="flex">
+                                <button class="use-custom text-green-500 hover:text-green-700 mr-2 btn-outline p-1 rounded" data-id="${idea.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                </button>
+                                <button class="delete-custom text-red-500 hover:text-red-700 btn-outline p-1 rounded" data-id="${idea.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">${idea.description}</p>
+                        <div class="mt-2 flex flex-wrap gap-2">
+                            ${tagsHTML}
+                        </div>
+                    </div>
+                `;
+                
+                customIdeasContainer.appendChild(card);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.delete-custom').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                    deleteCustomIdea(id);
+                });
+            });
+            
+            document.querySelectorAll('.use-custom').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const id = parseInt(e.currentTarget.getAttribute('data-id'));
+                    useCustomIdea(id);
+                });
+            });
+        }
+
+        // Delete custom idea
+        function deleteCustomIdea(id) {
+            customIdeasList = customIdeasList.filter(idea => idea.id !== id);
+            localStorage.setItem('customIdeas', JSON.stringify(customIdeasList));
+            renderCustomIdeas();
+            
+            if (customIdeasList.length === 0) {
+                document.getElementById('no-custom-ideas').classList.remove('hidden');
+            }
+        }
+
+        // Use custom idea (save it to saved ideas)
+        function useCustomIdea(id) {
+            const idea = customIdeasList.find(idea => idea.id === id);
+            if (idea) {
+                savedDatesList.push({
+                    ...idea,
+                    id: Date.now()
+                });
+                
+                localStorage.setItem('savedDates', JSON.stringify(savedDatesList));
+                renderSavedDates();
+                document.getElementById('saved-dates-container').classList.remove('hidden');
+                
+                // Show a success message
+                alert('Date idea saved to your collection!');
+            }
+        }
+
+        // Custom ideas dropdown toggle
+        document.getElementById('custom-ideas-toggle').addEventListener('click', () => {
+            const dropdown = document.getElementById('custom-ideas-dropdown');
+            const arrow = document.querySelector('.dropdown-arrow');
+            
+            dropdown.classList.toggle('open');
+            arrow.classList.toggle('open');
+            
+            // Save dropdown state
+            const isOpen = dropdown.classList.contains('open');
+            localStorage.setItem('customIdeasDropdownOpen', isOpen);
+        });
+
+        // Settings modal
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsBtn = document.getElementById('settings-btn');
+        const closeSettings = document.getElementById('close-settings');
+
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.classList.add('open');
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsModal.classList.remove('open');
+        });
+
+        // Close modal when clicking outside
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.remove('open');
+            }
+        });
+
+        // Color picker preview updates
+        document.getElementById('primary-color').addEventListener('input', (e) => {
+            document.getElementById('primary-color-preview').style.backgroundColor = e.target.value;
+        });
+
+        document.getElementById('secondary-color').addEventListener('input', (e) => {
+            document.getElementById('secondary-color-preview').style.backgroundColor = e.target.value;
+        });
+
+        document.getElementById('outline-color').addEventListener('input', (e) => {
+            const opacity = document.getElementById('outline-opacity').value;
+            const hexColor = e.target.value;
+            const rgbaColor = hexToRgba(hexColor, opacity / 100);
+            document.getElementById('outline-color-preview').style.backgroundColor = rgbaColor;
+        });
+
+        document.getElementById('outline-opacity').addEventListener('input', (e) => {
+            const hexColor = document.getElementById('outline-color').value;
+            const opacity = e.target.value;
+            const rgbaColor = hexToRgba(hexColor, opacity / 100);
+            document.getElementById('outline-color-preview').style.backgroundColor = rgbaColor;
+        });
+
+        // Reset settings
+        document.getElementById('reset-settings').addEventListener('click', () => {
+            // Reset to default values
+            document.getElementById('primary-color').value = defaultColors.primaryColor;
+            document.getElementById('primary-color-preview').style.backgroundColor = defaultColors.primaryColor;
+            
+            document.getElementById('secondary-color').value = defaultColors.secondaryColor;
+            document.getElementById('secondary-color-preview').style.backgroundColor = defaultColors.secondaryColor;
+            
+            document.getElementById('outline-color').value = defaultColors.outlineColor;
+            document.getElementById('outline-opacity').value = defaultColors.outlineOpacity;
+            
+            const rgbaOutlineColor = hexToRgba(defaultColors.outlineColor, defaultColors.outlineOpacity / 100);
+            document.getElementById('outline-color-preview').style.backgroundColor = rgbaOutlineColor;
+        });
+
+        // Apply settings
+        document.getElementById('apply-settings').addEventListener('click', () => {
+            const primaryColor = document.getElementById('primary-color').value;
+            const secondaryColor = document.getElementById('secondary-color').value;
+            const outlineColor = document.getElementById('outline-color').value;
+            const outlineOpacity = document.getElementById('outline-opacity').value;
+            
+            // Update colors
+            updateColors(primaryColor, secondaryColor, outlineColor, outlineOpacity);
+            
+            // Save settings
+            localStorage.setItem('primaryColor', primaryColor);
+            localStorage.setItem('secondaryColor', secondaryColor);
+            localStorage.setItem('outlineColor', outlineColor);
+            localStorage.setItem('outlineOpacity', outlineOpacity);
+            
+            // Close the modal
+            settingsModal.classList.remove('open');
+        });
+
+        // Update colors function
+        function updateColors(primaryColor, secondaryColor, outlineColor, outlineOpacity) {
+            // Create CSS variables for the colors
+            document.documentElement.style.setProperty('--primary-dark', primaryColor);
+            document.documentElement.style.setProperty('--primary-medium', adjustColor(primaryColor, 80));
+            document.documentElement.style.setProperty('--primary-light', adjustColor(primaryColor, 95));
+            document.documentElement.style.setProperty('--primary-gradient', `linear-gradient(135deg, ${secondaryColor} 0%, ${primaryColor} 100%)`);
+            
+            // Update outline color
+            const rgbaOutlineColor = hexToRgba(outlineColor, outlineOpacity / 100);
+            document.documentElement.style.setProperty('--outline-color', rgbaOutlineColor);
+            
+            // Update button outlines
+            document.querySelectorAll('.btn-outline::after').forEach(el => {
+                el.style.borderColor = rgbaOutlineColor;
+            });
+            
+            // Update color pickers
+            document.getElementById('primary-color').value = primaryColor;
+            document.getElementById('primary-color-preview').style.backgroundColor = primaryColor;
+            document.getElementById('secondary-color').value = secondaryColor;
+            document.getElementById('secondary-color-preview').style.backgroundColor = secondaryColor;
+            document.getElementById('outline-color').value = outlineColor;
+            document.getElementById('outline-opacity').value = outlineOpacity;
+            document.getElementById('outline-color-preview').style.backgroundColor = rgbaOutlineColor;
+            
+            // Update CSS for button outlines
+            const styleSheet = document.styleSheets[0];
+            for (let i = 0; i < styleSheet.cssRules.length; i++) {
+                const rule = styleSheet.cssRules[i];
+                if (rule.selectorText === '.btn-outline::after') {
+                    rule.style.borderColor = rgbaOutlineColor;
+                    break;
+                }
+            }
+        }
+
+        // Helper function to adjust color lightness
+        function adjustColor(hex, percent) {
+            // Convert hex to RGB
+            let r = parseInt(hex.substring(1, 3), 16);
+            let g = parseInt(hex.substring(3, 5), 16);
+            let b = parseInt(hex.substring(5, 7), 16);
+            
+            // Adjust lightness
+            r = Math.floor(r + (255 - r) * (percent / 100));
+            g = Math.floor(g + (255 - g) * (percent / 100));
+            b = Math.floor(b + (255 - b) * (percent / 100));
+            
+            // Convert back to hex
+            return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+        }
+
+        // Helper function to convert hex to rgba
+        function hexToRgba(hex, alpha) {
+            const r = parseInt(hex.substring(1, 3), 16);
+            const g = parseInt(hex.substring(3, 5), 16);
+            const b = parseInt(hex.substring(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // Initialize emoji picker
+        function initEmojiPicker() {
+            const emojiPicker = document.getElementById('emoji-picker');
+            const emojiInput = document.getElementById('custom-emoji');
+            const emojiPickerBtn = document.getElementById('emoji-picker-btn');
+            
+            // Populate emoji picker
+            commonEmojis.forEach(emoji => {
+                const emojiItem = document.createElement('div');
+                emojiItem.className = 'emoji-item';
+                emojiItem.textContent = emoji;
+                emojiItem.addEventListener('click', () => {
+                    emojiInput.value = emoji;
+                    emojiPicker.classList.add('hidden');
+                });
+                emojiPicker.appendChild(emojiItem);
+            });
+            
+            // Toggle emoji picker
+            emojiPickerBtn.addEventListener('click', () => {
+                emojiPicker.classList.toggle('hidden');
+            });
+            
+            // Close emoji picker when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!emojiPicker.contains(e.target) && e.target !== emojiPickerBtn) {
+                    emojiPicker.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize the UI
+        renderSavedDates();
+        renderCustomIdeas();
+        initEmojiPicker();
+        
+        // Check if dropdown should be open (from localStorage)
+        const dropdownShouldBeOpen = localStorage.getItem('customIdeasDropdownOpen') === 'true';
+        if (dropdownShouldBeOpen) {
+            document.getElementById('custom-ideas-dropdown').classList.add('open');
+            document.querySelector('.dropdown-arrow').classList.add('open');
+        }
+        
+        // Add active class to selected buttons on page load
+        document.querySelectorAll('.category-btn.selected, .time-btn.selected, .weather-btn.selected').forEach(btn => {
+            btn.classList.add('active');
+        });
+        
+        // Check if outdoor category is selected on page load
+        if (currentSelections.inPerson.category === 'outdoor') {
+            document.getElementById('weather-filter').classList.remove('hidden');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'983530ddc7faaac8',t:'MTc1ODU3OTY0MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
